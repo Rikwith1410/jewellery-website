@@ -1,105 +1,64 @@
-const questions = [
-    {
-        question: "What is the capital of France?",
-        answers: [
-            { text: "Berlin", correct: false },
-            { text: "Paris", correct: true },
-            { text: "Madrid", correct: false },
-            { text: "Rome", correct: false }
-        ]
-    },
-    {
-        question: "Who wrote 'To Kill a Mockingbird'?",
-        answers: [
-            { text: "Harper Lee", correct: true },
-            { text: "Mark Twain", correct: false },
-            { text: "J.K. Rowling", correct: false },
-            { text: "F. Scott Fitzgerald", correct: false }
-        ]
-    },
-    {
-        question: "What is the largest planet in our solar system?",
-        answers: [
-            { text: "Earth", correct: false },
-            { text: "Jupiter", correct: true },
-            { text: "Mars", correct: false },
-            { text: "Saturn", correct: false }
-        ]
-    }
-];
+// Neumorphic Digital Clock - JavaScript Code
+// Author: bufferwise
+// Join the Discord community:
+// https://discord.gg/26MMXRHgZB
 
-let currentQuestionIndex = 0;
-let score = 0;
+// Query all strip elements (hour, minute, second)
+const strips = [...document.querySelectorAll(".strip")];
+const numberSize = 8; // Number size in 'vmin' for the sliding effect
 
-const questionContainer = document.getElementById('question-container');
-const questionElement = document.getElementById('question');
-const answersElement = document.getElementById('answers');
-const nextButton = document.getElementById('next-btn');
-const resultContainer = document.getElementById('result');
-const scoreElement = document.getElementById('score');
+/**
+ * Highlights a specific digit on the given strip.
+ * Adds a "pop" effect briefly for a visual highlight.
+ * 
+ * @param {number} stripIndex - The index of the strip (hour, minute, second).
+ * @param {number} digit - The digit to highlight (0-9).
+ */
+function highlight(stripIndex, digit) {
+  const selectedNumber = strips[stripIndex].querySelector(`.number:nth-of-type(${digit + 1})`);
+  selectedNumber.classList.add("pop");
 
-function startGame() {
-    currentQuestionIndex = 0;
-    score = 0;
-    resultContainer.classList.add('hide');
-    questionContainer.classList.remove('hide');
-    nextButton.style.display = 'none';
-    showQuestion();
+  // Remove the highlight class after 950ms to create a ticking effect
+  setTimeout(() => {
+    selectedNumber.classList.remove("pop");
+  }, 950);
 }
 
-function showQuestion() {
-    resetState();
-    const currentQuestion = questions[currentQuestionIndex];
-    questionElement.textContent = currentQuestion.question;
-    currentQuestion.answers.forEach(answer => {
-        const button = document.createElement('button');
-        button.textContent = answer.text;
-        button.classList.add('answer');
-        if (answer.correct) {
-            button.dataset.correct = answer.correct;
-        }
-        button.addEventListener('click', selectAnswer);
-        answersElement.appendChild(button);
-    });
+/**
+ * Slides the strip to show the current digit.
+ * 
+ * @param {number} stripIndex - The index of the strip to update (0 for hours, 2 for minutes, 4 for seconds).
+ * @param {number} number - The two-digit number to display on the strip.
+ */
+function stripSlider(stripIndex, number) {
+  // Split number into two digits
+  const firstDigit = Math.floor(number / 10);
+  const secondDigit = number % 10;
+
+  // Slide the first digit
+  strips[stripIndex].style.transform = `translateY(${firstDigit * -numberSize}vmin)`;
+  highlight(stripIndex, firstDigit);
+
+  // Slide the second digit
+  strips[stripIndex + 1].style.transform = `translateY(${secondDigit * -numberSize}vmin)`;
+  highlight(stripIndex + 1, secondDigit);
 }
 
-function resetState() {
-    nextButton.style.display = 'none';
-    while (answersElement.firstChild) {
-        answersElement.removeChild(answersElement.firstChild);
-    }
+/**
+ * Updates the clock every second.
+ * Retrieves the current time and updates the hour, minute, and second strips accordingly.
+ */
+function updateClock() {
+  const time = new Date();
+  const hours = time.getHours();
+  const minutes = time.getMinutes();
+  const seconds = time.getSeconds();
+
+  // Update the hour, minute, and second strips
+  stripSlider(0, hours);
+  stripSlider(2, minutes);
+  stripSlider(4, seconds);
 }
 
-function selectAnswer(e) {
-    const selectedButton = e.target;
-    const correct = selectedButton.dataset.correct;
-    if (correct) {
-        score++;
-    }
-    Array.from(answersElement.children).forEach(button => {
-        button.classList.add(button.dataset.correct ? 'correct' : 'wrong');
-        button.disabled = true;
-    });
-    if (currentQuestionIndex < questions.length - 1) {
-        nextButton.style.display = 'block';
-    } else {
-        showResult();
-    }
-}
-
-function nextQuestion() {
-    currentQuestionIndex++;
-    showQuestion();
-}
-
-function showResult() {
-    questionContainer.classList.add('hide');
-    resultContainer.classList.remove('hide');
-    scoreElement.textContent = `You scored ${score} out of ${questions.length}`;
-}
-
-function restartGame() {
-    startGame();
-}
-
-startGame();
+// Set an interval to update the clock every second
+setInterval(updateClock, 1000);
